@@ -39,9 +39,9 @@ def run_app(module):
     else:
         st.error(f"The selected app ({module.__name__}) does not have a main() function.")
 
-if app_choice == "Nifty50 Stock Analysis":
-    run_app(nifty_app)
+if app_choice == "Stock Analysis":
+    run_app(nifty_app) 
 elif app_choice == "Quantum AI Portfolio":
     run_app(quantum_app)
-elif app_choice == "Stock Analysis":
-    run_app(stock_app)
+elif app_choice == "Nifty50 Stock Analysis":
+    run_app(stock_app) 
