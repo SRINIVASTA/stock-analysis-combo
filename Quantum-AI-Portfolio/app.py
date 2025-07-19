@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 
-def app():
+def main():
     st.set_page_config(page_title="Quantum AI Portfolio", layout="wide")
 
     # Theme selector
@@ -70,17 +70,8 @@ def app():
     min_allowed_date = datetime.date(1990, 1, 1)
     today = datetime.date.today()
 
-    start_date = st.sidebar.date_input(
-        "Start Date",
-        value=today - datetime.timedelta(days=100),
-        min_value=min_allowed_date
-    )
-
-    end_date = st.sidebar.date_input(
-        "End Date",
-        value=today,
-        min_value=min_allowed_date
-    )
+    start_date = st.sidebar.date_input("Start Date", value=today - datetime.timedelta(days=100), min_value=min_allowed_date)
+    end_date = st.sidebar.date_input("End Date", value=today, min_value=min_allowed_date)
 
     investment_amount = st.sidebar.number_input("Investment Amount", min_value=1000, value=100000, step=1000, format="%d")
 
@@ -193,10 +184,8 @@ def app():
             st.warning("High concentration risk detected. Consider diversifying your portfolio.")
         else:
             st.success("Portfolio diversification looks good.")
-
     else:
         st.error("No valid price data found for the given tickers.")
 
-
 if __name__ == "__main__":
-    app()
+    main()
