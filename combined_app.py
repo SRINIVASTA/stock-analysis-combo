@@ -1,3 +1,4 @@
+import streamlit as st
 import importlib.util
 import sys
 import os
@@ -11,11 +12,10 @@ def import_from_path(name, path):
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
+# Import apps by specifying exact paths
 nifty_app = import_from_path("nifty_app", os.path.join(current_dir, "nifty50-stock-analysis", "app.py"))
 quantum_app = import_from_path("quantum_app", os.path.join(current_dir, "Quantum-AI-Portfolio", "app.py"))
 stock_app = import_from_path("stock_app", os.path.join(current_dir, "stock_analysis", "stock_analysis_app.py"))
-
-import streamlit as st
 
 st.title("SRINIVASTA Combined Stock Analysis")
 
