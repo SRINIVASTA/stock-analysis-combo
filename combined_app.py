@@ -1,18 +1,21 @@
-import streamlit as st
+import importlib.util
 import sys
 import os
 
+def import_from_path(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Add each repo folder to sys.path
-sys.path.append(os.path.join(current_dir, "nifty50-stock-analysis"))
-sys.path.append(os.path.join(current_dir, "Quantum-AI-Portfolio"))
-sys.path.append(os.path.join(current_dir, "stock_analysis"))
+nifty_app = import_from_path("nifty_app", os.path.join(current_dir, "nifty50-stock-analysis", "app.py"))
+quantum_app = import_from_path("quantum_app", os.path.join(current_dir, "Quantum-AI-Portfolio", "app.py"))
+stock_app = import_from_path("stock_app", os.path.join(current_dir, "stock_analysis", "stock_analysis_app.py"))
 
-# Import main app scripts using their folder-qualified names
-from nifty50_stock_analysis import app as nifty_app
-from Quantum_AI_Portfolio import app as quantum_app
-from stock_analysis import stock_analysis_app as stock_app
+import streamlit as st
 
 st.title("SRINIVASTA Combined Stock Analysis")
 
