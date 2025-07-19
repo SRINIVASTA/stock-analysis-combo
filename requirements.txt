@@ -1,1 +1,4 @@
-cat nifty50-stock-analysis/requirements.txt Quantum-AI-Portfolio/requirements.txt stock_analysis/requirements.txt | sort | uniq > requirements.txt
+streamlit
+pandas
+numpy
+scikit-learn
