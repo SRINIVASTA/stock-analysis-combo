@@ -12,24 +12,36 @@ def import_from_path(name, path):
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Import the main app modules from their respective folders
-nifty_app = import_from_path("nifty_app", os.path.join(current_dir, "nifty50-stock-analysis", "app.py"))
-quantum_app = import_from_path("quantum_app", os.path.join(current_dir, "Quantum-AI-Portfolio", "app.py"))
-stock_app = import_from_path("stock_app", os.path.join(current_dir, "stock_analysis", "stock_analysis_app.py"))
+# Add folders to sys.path if their modules need internal imports
+sys.path.insert(0, os.path.join(current_dir, "nifty50-stock-analysis"))
+sys.path.insert(0, os.path.join(current_dir, "Quantum-AI-Portfolio"))
+sys.path.insert(0, os.path.join(current_dir, "stock_analysis"))
+
+try:
+    nifty_app = import_from_path("nifty_app", os.path.join(current_dir, "nifty50-stock-analysis", "app.py"))
+    quantum_app = import_from_path("quantum_app", os.path.join(current_dir, "Quantum-AI-Portfolio", "app.py"))
+    stock_app = import_from_path("stock_app", os.path.join(current_dir, "stock_analysis", "stock_analysis_app.py"))
+except Exception as e:
+    st.error(f"Error importing apps: {e}")
+    st.stop()
 
 st.title("📊 SRINIVASTA Combined Stock Dashboard")
 
-# Sidebar menu for selecting apps
 app_choice = st.sidebar.radio("Select an app:", [
     "Nifty50 Stock Analysis",
     "Quantum AI Portfolio",
     "Stock Analysis"
 ])
 
-# Run the selected app's main function
+def run_app(module):
+    if hasattr(module, "main"):
+        module.main()
+    else:
+        st.error(f"The selected app ({module.__name__}) does not have a main() function.")
+
 if app_choice == "Nifty50 Stock Analysis":
-    nifty_app.main()
+    run_app(nifty_app)
 elif app_choice == "Quantum AI Portfolio":
-    quantum_app.main()
+    run_app(quantum_app)
 elif app_choice == "Stock Analysis":
-    stock_app.main()
+    run_app(stock_app)
