@@ -25,14 +25,25 @@ except Exception as e:
     st.error(f"Error importing apps: {e}")
     st.stop()
 
+# Set the main title for the combined dashboard
 st.title("📊 SRINIVASTA Combined Stock Dashboard")
 
+# Sidebar for app selection
 app_choice = st.sidebar.radio("Select an app:", [
     "Stock Analysis",              # Should call stock_app
     "Quantum AI Portfolio",        # Should call quantum_app
     "Nifty50 Stock Analysis"       # Should call nifty_app
 ])
 
+# Dynamically change the title for each app
+if app_choice == "Stock Analysis":
+    st.header("📊 Stock Analysis Tool")
+elif app_choice == "Quantum AI Portfolio":
+    st.header("🧠 Quantum AI Portfolio Dashboard")
+elif app_choice == "Nifty50 Stock Analysis":
+    st.header("📊 Nifty 50 Stock Analysis")
+
+# Function to run the selected app's main function
 def run_app(module):
     if hasattr(module, "main"):
         module.main()
