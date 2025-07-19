@@ -4,3 +4,4 @@ seaborn
 pandas
 numpy
 yfinance
+plotly
