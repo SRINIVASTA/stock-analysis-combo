@@ -9,7 +9,8 @@ from stock_analysis import get_data  # Only importing get_data function
 st.set_page_config(layout="wide")
 st.title("📊 Nifty 50 Stock Analysis")
 
-def main_app():
+# This will be called by `combined_app.py` to run the app
+def main():
     with st.spinner("Fetching stock data..."):
         df = get_data()
     st.success("Data loaded!")
@@ -56,13 +57,3 @@ def main_app():
         file_name="nifty50_stock_analysis.png",
         mime="image/png"
     )
-
-def app():
-    main_app()
-
-# 👇👇 ADD THIS 👇👇
-def main():
-    app()
-
-if __name__ == "__main__":
-    main()
