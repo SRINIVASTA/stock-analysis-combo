@@ -1,7 +1,9 @@
 streamlit
+plotly
+ta
 matplotlib
 seaborn
+yfinance
 pandas
 numpy
-yfinance
-plotly
+# any other packages your apps use
