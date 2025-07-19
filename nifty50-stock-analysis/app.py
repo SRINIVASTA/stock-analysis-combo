@@ -4,7 +4,7 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 import io
 
-from stock_analysis import get_data  # only import get_data now
+from stock_analysis import get_data  # Only importing get_data function
 
 st.set_page_config(layout="wide")
 st.title("📊 Nifty 50 Stock Analysis")
@@ -14,10 +14,10 @@ def main_app():
         df = get_data()
     st.success("Data loaded!")
 
-    st.subheader("Data Table")
+    st.subheader("📋 Data Table")
     st.dataframe(df)
 
-    st.subheader("Price vs Book Value & P/B Ratio Chart")
+    st.subheader("📈 Price vs Book Value & P/B Ratio Chart")
     fig, ax1 = plt.subplots(figsize=(15, 10))
 
     sns.barplot(x='Ticker', y='Current Price', data=df, color='skyblue', label='Current Price', width=0.6, ax=ax1)
@@ -44,23 +44,25 @@ def main_app():
     ax1.legend(handles=legend_elements, title='Metrics', loc='upper left', bbox_to_anchor=(1.05, 1), fontsize=10)
 
     fig.tight_layout(pad=2.0)
-
     st.pyplot(fig)
 
-    # Download button for the plot image
+    # Download button
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches='tight')
     buf.seek(0)
     st.download_button(
-        label="Download Plot as PNG",
+        label="📥 Download Plot as PNG",
         data=buf,
         file_name="nifty50_stock_analysis.png",
         mime="image/png"
     )
 
 def app():
-    # Directly run the main app without login checks
     main_app()
 
-if __name__ == "__main__":
+# 👇👇 ADD THIS 👇👇
+def main():
     app()
+
+if __name__ == "__main__":
+    main()
