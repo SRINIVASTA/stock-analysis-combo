@@ -28,9 +28,9 @@ except Exception as e:
 st.title("📊 SRINIVASTA Combined Stock Dashboard")
 
 app_choice = st.sidebar.radio("Select an app:", [
-    "Nifty50 Stock Analysis",
+    "Stock Analysis",
     "Quantum AI Portfolio",
-    "Stock Analysis"
+    "Nifty50 Stock Analysis"
 ])
 
 def run_app(module):
