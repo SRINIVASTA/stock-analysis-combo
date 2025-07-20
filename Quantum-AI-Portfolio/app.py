@@ -61,7 +61,7 @@ def main():
         </style>
     """, unsafe_allow_html=True)
 
-    st.title("🧠 Quantum AI Portfolio Dashboard")
+    st.title("🧠 Welcome to Quantum AI Portfolio Dashboard")
 
     # Sidebar inputs
     tickers = st.sidebar.text_input("Enter Ticker Symbols (comma-separated)", "AAPL,MSFT,RELIANCE.NS")
