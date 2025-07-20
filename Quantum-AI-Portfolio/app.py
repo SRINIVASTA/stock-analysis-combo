@@ -8,7 +8,7 @@ def main():
     st.set_page_config(page_title="Welcome Quantum AI Portfolio", layout="wide")
 
     # Theme selector
-    theme = st.sidebar.selectbox("Select Theme", ["Dark", "Light"])
+    theme = st.sidebar.selectbox("Select Theme", ["Light", "Dark"])
 
     if theme == "Dark":
         bg_color = "#121212"
