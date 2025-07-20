@@ -25,8 +25,18 @@ except Exception as e:
     st.error(f"Error importing apps: {e}")
     st.stop()
 
+
 # Set the main title for the combined dashboard
-st.title("📊 SRINIVASTA Combined Stock Dashboard")
+st.markdown(
+    """
+    <h1 style='text-align: center; color: #3366cc;'>
+        📊 SRINIVASTA <span style='color:#00cc99;'>Combined Stock Dashboard</span>
+    </h1>
+    """,
+    unsafe_allow_html=True
+)
+
+# st.title("📊 SRINIVASTA Combined Stock Dashboard")
 
 # Sidebar for app selection
 app_choice = st.sidebar.radio("Select an app:", [
