@@ -6,13 +6,10 @@ import io
 
 from stock_analysis import get_data  # Only importing get_data function
 
-st.set_page_config(page_title="📈 Nifty 50 Stock Analysis", layout="wide")
-
-# st.set_page_config(layout="wide")
-# st.title("📊 Nifty 50 Stock Analysis")
-
-# This will be called by `combined_app.py` to run the app
 def main():
+    st.set_page_config(layout="wide")
+    st.header("📊 Nifty 50 Stock Analysis")  # Changed to st.header (title is in combined app)
+
     with st.spinner("Fetching stock data..."):
         df = get_data()
     st.success("Data loaded!")
