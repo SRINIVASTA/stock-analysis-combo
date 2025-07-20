@@ -8,7 +8,7 @@ from stock_analysis import get_data  # Only importing get_data function
 
 def main():
     st.set_page_config(layout="wide")
-    st.header("📊 Nifty 50 Stock Analysis")  # Changed to st.header (title is in combined app)
+    st.header("📊 Welcome to the Nifty50 Stock Analysis dashboard")  # Changed to st.header (title is in combined app)
 
     with st.spinner("Fetching stock data..."):
         df = get_data()
