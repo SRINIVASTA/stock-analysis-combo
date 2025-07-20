@@ -6,8 +6,8 @@ import io
 
 from stock_analysis import get_data  # Only importing get_data function
 
-# st.set_page_config(layout="wide")
-# st.title("📊 Nifty 50 Stock Analysis")
+st.set_page_config(layout="wide")
+st.title("📊 Nifty 50 Stock Analysis")
 
 # This will be called by `combined_app.py` to run the app
 def main():
