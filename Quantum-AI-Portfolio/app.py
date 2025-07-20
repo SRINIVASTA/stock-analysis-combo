@@ -5,7 +5,7 @@ import numpy as np
 import datetime
 
 def main():
-    st.set_page_config(page_title="Quantum AI Portfolio", layout="wide")
+    st.set_page_config(page_title="Welcome Quantum AI Portfolio", layout="wide")
 
     # Theme selector
     theme = st.sidebar.selectbox("Select Theme", ["Dark", "Light"])
