@@ -129,7 +129,7 @@ def main():
     period = st.sidebar.selectbox("Time Period", ['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'ytd', 'max'])
     fetch_button = st.sidebar.button("📥 Fetch Stock Data")
 
-    st.title("📊 Stock Analysis Tool")
+    st.title("📊 Welcome to Stock Analysis Tool")
 
     if fetch_button:
         stock, hist, error = fetch_stock_data(symbol, period)
