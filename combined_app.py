@@ -33,7 +33,7 @@ st.markdown(
         📊 SRINIVASTA <span style='color:#00cc99;'>Combined Stock Dashboard</span>
     </h1>
     <p style='text-align: center; font-size: 14px; color: #666666;'>
-        Markets Disclaimer: Investments in securities are subject to market risk. The value and return on investment may vary because of changes in interest rates, foreign exchange rates, or any other reason.
+        Market Disclaimer: Investments in securities are subject to market risk. The value and return on investment may vary because of changes in interest rates, foreign exchange rates, or any other reason.
     </p>
     """,
     unsafe_allow_html=True
