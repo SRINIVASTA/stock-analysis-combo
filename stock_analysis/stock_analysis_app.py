@@ -61,6 +61,14 @@ def print_major_holders(stock):
             st.write(f"{float_held * 100:.3f}% of Float Held by Institutions")
         if institutions_count is not None:
             st.write(f"{int(institutions_count)} Institutions Holding Shares")
+
+        with st.expander("📘 Learn More about Major Holders"):
+            st.markdown("""
+            **Major Holders** are large shareholders that can influence stock price and company decisions:
+            - **Insiders:** Company executives and employees holding shares.
+            - **Institutions:** Investment firms, mutual funds, pension funds owning shares.
+            - **Float:** Shares available for trading (excluding locked-in shares).
+            """)
     except Exception as e:
         st.write(f"Error fetching major holders: {e}")
 
@@ -86,15 +94,18 @@ def generate_signal(rsi, macd, signal_line):
         latest_macd = macd.iloc[-1]
         latest_signal = signal_line.iloc[-1]
 
+        messages = []
         if latest_rsi < 30:
-            return "🔼 RSI suggests the stock may be **oversold**."
+            messages.append("🔼 RSI suggests the stock may be **oversold**.")
         elif latest_rsi > 70:
-            return "🔽 RSI suggests the stock may be **overbought**."
+            messages.append("🔽 RSI suggests the stock may be **overbought**.")
 
         if latest_macd > latest_signal:
-            return "📈 MACD indicates a **bullish** crossover."
+            messages.append("📈 MACD indicates a **bullish** crossover.")
         else:
-            return "📉 MACD indicates a **bearish** crossover."
+            messages.append("📉 MACD indicates a **bearish** crossover.")
+
+        return " ".join(messages)
     except:
         return "Unable to generate signal summary."
 
@@ -120,6 +131,95 @@ def plot_candlestick_chart(hist):
     )])
     fig.update_layout(title="Candlestick Chart", xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False)
     st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("📘 Learn More about Candlestick Charts"):
+        st.markdown("""
+        Candlestick charts display stock price movements within a specific period:
+        - **Body:** Shows open and close prices (green = close > open, red = close < open).
+        - **Wicks (Shadows):** Indicate high and low prices.
+        They help visualize market sentiment, trends, and reversals.
+        """)
+
+def plot_sma_chart(hist):
+    fig, ax = plt.subplots()
+    ax.plot(hist.index, hist['Close'], label='Close', color='blue')
+    ax.plot(hist.index, hist['SMA20'], label='SMA 20', color='green')
+    ax.plot(hist.index, hist['SMA50'], label='SMA 50', color='red')
+    ax.legend()
+    ax.grid(True)
+    fig.autofmt_xdate()
+    st.pyplot(fig)
+
+    with st.expander("📘 Learn More about Simple Moving Averages (SMA)"):
+        st.markdown("""
+        SMAs smooth out price data by averaging closing prices over a set period:
+        - **SMA20:** Short-term trend indicator.
+        - **SMA50:** Medium-term trend indicator.
+        Crossovers between SMAs can signal potential buy or sell points.
+        """)
+
+def plot_volume_chart(hist):
+    fig, ax = plt.subplots()
+    ax.bar(hist.index, hist['Volume'], color='gray')
+    ax.set_title("Trading Volume")
+    fig.autofmt_xdate()
+    st.pyplot(fig)
+
+    with st.expander("📘 Learn More about Trading Volume"):
+        st.markdown("""
+        Volume shows the number of shares traded during a specific time.
+        High volume often confirms price movements; low volume may indicate weak interest.
+        """)
+
+def plot_rsi_chart(hist):
+    fig, ax = plt.subplots()
+    ax.plot(hist.index, hist['RSI'], color='purple')
+    ax.axhline(70, color='red', linestyle='--', label='Overbought')
+    ax.axhline(30, color='green', linestyle='--', label='Oversold')
+    ax.set_title("RSI")
+    ax.legend()
+    fig.autofmt_xdate()
+    st.pyplot(fig)
+
+    with st.expander("📘 Learn More about RSI (Relative Strength Index)"):
+        st.markdown("""
+        RSI measures speed and change of price movements on a scale of 0 to 100.
+        - Above 70: Overbought (possible sell signal).
+        - Below 30: Oversold (possible buy signal).
+        RSI helps identify momentum shifts.
+        """)
+
+def plot_macd_chart(hist):
+    fig, ax = plt.subplots()
+    ax.plot(hist.index, hist['MACD'], label='MACD', color='black')
+    ax.plot(hist.index, hist['Signal'], label='Signal Line', color='orange')
+    ax.axhline(0, color='gray', linestyle='--')
+    ax.legend()
+    fig.autofmt_xdate()
+    st.pyplot(fig)
+
+    with st.expander("📘 Learn More about MACD and Signal Line"):
+        st.markdown("""
+        The MACD (Moving Average Convergence Divergence) shows the relationship between two EMAs:
+        - **MACD line:** Difference between 12-day and 26-day EMAs.
+        - **Signal line:** 9-day EMA of the MACD line.
+        Crossovers indicate buy or sell signals:
+        - MACD crossing above Signal = Bullish.
+        - MACD crossing below Signal = Bearish.
+        """)
+
+def explain_macd_difference(macd_series, signal_series):
+    diff = macd_series.iloc[-1] - signal_series.iloc[-1]
+    st.subheader("📊 MACD - Signal Line Difference")
+    st.write(f"Current difference between MACD and Signal Line: **{diff:.4f}**")
+
+    with st.expander("📘 Learn More about MACD Difference"):
+        st.markdown("""
+        The difference between MACD and Signal line helps confirm momentum strength:
+        - Positive difference: Bullish momentum.
+        - Negative difference: Bearish momentum.
+        Larger magnitude = stronger momentum.
+        """)
 
 # ------------------- Main App -------------------
 
@@ -163,12 +263,38 @@ def main():
         - **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
         """)
 
+        with st.expander("📘 Learn More about Summary Metrics"):
+            st.markdown("""
+            - **Market Cap:** Total value of a company’s outstanding shares.
+            - **P/E Ratio:** Price-to-Earnings ratio; valuation metric.
+            - **Dividend Yield:** Annual dividends paid divided by stock price.
+            - **Volume:** Number of shares traded in a period.
+            - **Book Value:** Net asset value per share.
+            - **EPS (TTM):** Earnings per share for last 12 months.
+            - **ROE:** Return on equity; profitability relative to shareholders’ equity.
+            - **Debt to Equity:** Financial leverage indicator.
+            - **Operating Margin:** Profitability from operations.
+            """)
+
         # Short-Term Signal
-        st.info(generate_signal(hist['RSI'], hist['MACD'], hist['Signal']))
+        signal_text = generate_signal(hist['RSI'], hist['MACD'], hist['Signal'])
+        st.info(signal_text)
+        with st.expander("📘 Learn More about Short-Term Signals"):
+            st.markdown("""
+            - **RSI:** Indicates if stock is overbought or oversold.
+            - **MACD Crossover:** Bullish or bearish momentum shifts.
+            """)
 
         # Long-Term MACD Meter
         trend_text, trend_color = get_long_term_macd_trend(hist['MACD'])
         st.markdown(f"<h4 style='color:{trend_color}'>{trend_text}</h4>", unsafe_allow_html=True)
+        with st.expander("📘 Learn More about Long-Term MACD Trend"):
+            st.markdown("""
+            This looks at average MACD over past 30 periods to indicate overall market sentiment:
+            - Positive = Bullish trend.
+            - Negative = Bearish trend.
+            - Neutral = Mixed signals.
+            """)
 
         # Major Holders
         print_major_holders(stock)
@@ -176,91 +302,31 @@ def main():
         # Candlestick Chart
         st.subheader("🕯️ Candlestick Chart")
         plot_candlestick_chart(hist)
-        with st.expander("📘 Learn More about Candlestick Chart"):
-            st.markdown("""
-            Candlestick charts display the Open, High, Low, and Close prices of a security for a specific period.  
-            - The "body" shows the range between Open and Close.  
-            - The "wicks" show High and Low prices.  
-            - Green body means price closed higher than opened; red means lower.
-            """)
 
         # SMA Plot
         st.subheader("📈 Price History with SMA")
-        fig, ax = plt.subplots()
-        ax.plot(hist.index, hist['Close'], label='Close', color='blue')
-        ax.plot(hist.index, hist['SMA20'], label='SMA 20', color='green')
-        ax.plot(hist.index, hist['SMA50'], label='SMA 50', color='red')
-        ax.legend()
-        ax.grid(True)
-        fig.autofmt_xdate()
-        st.pyplot(fig)
-        with st.expander("📘 Learn More about SMA"):
-            st.markdown("""
-            SMA = Simple Moving Average  
-            - **SMA 20**: Short term  
-            - **SMA 50**: Medium term  
-            📍 Crossovers can indicate trend reversals.
-            """)
+        plot_sma_chart(hist)
 
         # Volume Chart
         st.subheader("📊 Volume Chart")
-        fig, ax = plt.subplots()
-        ax.bar(hist.index, hist['Volume'], color='gray')
-        ax.set_title("Trading Volume")
-        fig.autofmt_xdate()
-        st.pyplot(fig)
-        with st.expander("📘 Learn More about Volume"):
-            st.markdown("""
-            Volume = number of shares traded.  
-            📈 High volume = strong interest  
-            📉 Low volume = indecision
-            """)
+        plot_volume_chart(hist)
 
-        # RSI
+        # RSI Plot
         st.subheader("📉 RSI Indicator")
-        fig, ax = plt.subplots()
-        ax.plot(hist.index, hist['RSI'], color='purple')
-        ax.axhline(70, color='red', linestyle='--', label='Overbought')
-        ax.axhline(30, color='green', linestyle='--', label='Oversold')
-        ax.set_title("RSI")
-        ax.legend()
-        fig.autofmt_xdate()
-        st.pyplot(fig)
-        with st.expander("📘 Learn More about RSI"):
-            st.markdown("""
-            RSI = Relative Strength Index  
-            - Above 70 = **Overbought** (potential drop)  
-            - Below 30 = **Oversold** (potential bounce)
-            """)
+        plot_rsi_chart(hist)
 
-        # MACD
+        # MACD Plot
         st.subheader("📈 MACD Indicator")
-        fig, ax = plt.subplots()
-        ax.plot(hist.index, hist['MACD'], label='MACD', color='black')
-        ax.plot(hist.index, hist['Signal'], label='Signal Line', color='orange')
-        ax.axhline(0, color='gray', linestyle='--')
-        ax.legend()
-        fig.autofmt_xdate()
-        st.pyplot(fig)
+        plot_macd_chart(hist)
 
-        # MACD - Signal difference
-        macd_signal_diff = hist['MACD'] - hist['Signal']
-        latest_diff = macd_signal_diff.iloc[-1]
-        st.write(f"**MACD - Signal Line Difference:** {latest_diff:.4f}")
+        # MACD vs Signal difference
+        explain_macd_difference(hist['MACD'], hist['Signal'])
 
-        with st.expander("📘 Learn More about MACD Difference"):
-            st.markdown("""
-            The difference between MACD and Signal line helps identify momentum strength:
-            - Positive difference means bullish momentum (MACD above Signal line).
-            - Negative difference means bearish momentum (MACD below Signal line).
-            - Larger absolute values indicate stronger momentum.
-            """)
-
-        # Download
+        # CSV Download
         csv = hist.to_csv()
         st.download_button("📥 Download Historical Data", data=csv, file_name=f"{symbol}_{period}_data.csv", mime='text/csv')
 
-        # Live Price Refresh
+        # Live price refresh
         if st.button("🔄 Refresh Current Price"):
             try:
                 live_price = yf.Ticker(symbol).info.get('currentPrice')
