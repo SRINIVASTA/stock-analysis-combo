@@ -142,12 +142,8 @@ def main():
         currency = info.get('currency', 'INR')
         currency_symbol = get_currency_symbol(currency)
         current_price = info.get('currentPrice', hist['Close'].iloc[-1])
-        book_value = info.get("bookValue", "N/A")
-        face_value = info.get("faceValue", "N/A")
-        isin = info.get("isin", "N/A")
         formatted_time = format_close_time(hist.index[-1], symbol)
 
-        # Summary Info
         st.subheader(f"🏢 {longName} ({symbol})")
         st.markdown(f"""
         - **Current Price:** {currency_symbol}{current_price:.2f}
@@ -156,28 +152,31 @@ def main():
         - **P/E Ratio:** {info.get('trailingPE', 'N/A')}
         - **Dividend Yield:** {info.get('dividendYield', 0) * 100:.2f}%
         - **Volume:** {info.get('volume', 'N/A')}
-        - **Book Value:** {currency_symbol}{book_value}
+        - **Book Value:** {currency_symbol}{info.get("bookValue", "N/A")}
         - **EPS (TTM):** {info.get('trailingEps', 'N/A')}
         - **ROE:** {info.get('returnOnEquity', 0) * 100:.2f}%
         - **Debt to Equity:** {info.get('debtToEquity', 'N/A')}
         - **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
         """)
 
-        # Short-Term Signal
         st.info(generate_signal(hist['RSI'], hist['MACD'], hist['Signal']))
-
-        # Long-Term MACD Meter
         trend_text, trend_color = get_long_term_macd_trend(hist['MACD'])
         st.markdown(f"<h4 style='color:{trend_color}'>{trend_text}</h4>", unsafe_allow_html=True)
 
-        # Major Holders
         print_major_holders(stock)
 
         # Candlestick Chart
         st.subheader("🕯️ Candlestick Chart")
         plot_candlestick_chart(hist)
+        with st.expander("📘 Learn More about Candlestick Charts"):
+            st.markdown("""
+            Candlestick charts show:  
+            - **Open**, **High**, **Low**, **Close** for each time period.  
+            ✅ Green = Price closed higher  
+            ❌ Red = Price closed lower
+            """)
 
-        # SMA Plot
+        # SMA Chart
         st.subheader("📈 Price History with SMA")
         fig, ax = plt.subplots()
         ax.plot(hist.index, hist['Close'], label='Close', color='blue')
@@ -187,6 +186,13 @@ def main():
         ax.grid(True)
         fig.autofmt_xdate()
         st.pyplot(fig)
+        with st.expander("📘 Learn More about SMA"):
+            st.markdown("""
+            **SMA** smooths out price over time:  
+            - **SMA 20**: Short term  
+            - **SMA 50**: Medium term  
+            📍 Crossovers can indicate trend reversals.
+            """)
 
         # Volume Chart
         st.subheader("📊 Volume Chart")
@@ -195,8 +201,14 @@ def main():
         ax.set_title("Trading Volume")
         fig.autofmt_xdate()
         st.pyplot(fig)
+        with st.expander("📘 Learn More about Volume"):
+            st.markdown("""
+            Volume = number of shares traded.  
+            📈 High volume = strong interest  
+            📉 Low volume = indecision
+            """)
 
-        # RSI Plot
+        # RSI
         st.subheader("📉 RSI Indicator")
         fig, ax = plt.subplots()
         ax.plot(hist.index, hist['RSI'], color='purple')
@@ -206,8 +218,14 @@ def main():
         ax.legend()
         fig.autofmt_xdate()
         st.pyplot(fig)
+        with st.expander("📘 Learn More about RSI"):
+            st.markdown("""
+            RSI = Relative Strength Index  
+            - Above 70 = **Overbought** (potential drop)  
+            - Below 30 = **Oversold** (potential bounce)
+            """)
 
-        # MACD Plot
+        # MACD
         st.subheader("📈 MACD Indicator")
         fig, ax = plt.subplots()
         ax.plot(hist.index, hist['MACD'], label='MACD', color='black')
@@ -216,12 +234,18 @@ def main():
         ax.legend()
         fig.autofmt_xdate()
         st.pyplot(fig)
+        with st.expander("📘 Learn More about MACD"):
+            st.markdown("""
+            MACD shows trend strength and momentum:  
+            - **Bullish crossover**: MACD > Signal  
+            - **Bearish crossover**: MACD < Signal
+            """)
 
-        # CSV Download
+        # Download
         csv = hist.to_csv()
         st.download_button("📥 Download Historical Data", data=csv, file_name=f"{symbol}_{period}_data.csv", mime='text/csv')
 
-        # Live price refresh
+        # Live Price Refresh
         if st.button("🔄 Refresh Current Price"):
             try:
                 live_price = yf.Ticker(symbol).info.get('currentPrice')
