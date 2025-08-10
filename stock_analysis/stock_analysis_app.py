@@ -43,41 +43,25 @@ def print_major_holders(stock):
     try:
         mh = stock.major_holders
         if mh is None or mh.empty:
-            st.write("No major holders data available.")
             return
-
         data = mh.iloc[:, 0].to_dict()
-        insiders = data.get('insidersPercentHeld', None)
-        institutions = data.get('institutionsPercentHeld', None)
-        float_held = data.get('institutionsFloatPercentHeld', None)
-        institutions_count = data.get('institutionsCount', None)
-
         st.subheader("Major Holders Breakdown:")
-        if insiders is not None:
-            st.write(f"{insiders * 100:.3f}% of Shares Held by Insiders")
-        if institutions is not None:
-            st.write(f"{institutions * 100:.3f}% of Shares Held by Institutions")
-        if float_held is not None:
-            st.write(f"{float_held * 100:.3f}% of Float Held by Institutions")
-        if institutions_count is not None:
-            st.write(f"{int(institutions_count)} Institutions Holding Shares")
-
-        with st.expander("📘 Learn More about Major Holders"):
-            st.markdown("""
-            **Major Holders** are large shareholders that can influence stock price and company decisions:
-            - **Insiders:** Company executives and employees holding shares.
-            - **Institutions:** Investment firms, mutual funds, pension funds owning shares.
-            - **Float:** Shares available for trading (excluding locked-in shares).
-            """)
-    except Exception as e:
-        st.write(f"Error fetching major holders: {e}")
+        if 'insidersPercentHeld' in data:
+            st.write(f"🧑‍💼 Insiders Hold: **{data['insidersPercentHeld'] * 100:.2f}%**")
+        if 'institutionsPercentHeld' in data:
+            st.write(f"🏦 Institutions Hold: **{data['institutionsPercentHeld'] * 100:.2f}%**")
+        if 'institutionsFloatPercentHeld' in data:
+            st.write(f"📊 Float Held by Institutions: **{data['institutionsFloatPercentHeld'] * 100:.2f}%**")
+        if 'institutionsCount' in data:
+            st.write(f"🏢 Institutions Count: **{int(data['institutionsCount'])}**")
+    except:
+        pass
 
 def fetch_stock_data(symbol, period):
     stock = yf.Ticker(symbol)
     hist = stock.history(period=period)
     if hist.empty:
         return None, None, "No historical data found."
-
     hist.dropna(inplace=True)
     hist['SMA20'] = hist['Close'].rolling(window=20).mean()
     hist['SMA50'] = hist['Close'].rolling(window=50).mean()
@@ -85,7 +69,6 @@ def fetch_stock_data(symbol, period):
     macd = ta.trend.MACD(hist['Close'])
     hist['MACD'] = macd.macd()
     hist['Signal'] = macd.macd_signal()
-
     return stock, hist, None
 
 def generate_signal(rsi, macd, signal_line):
@@ -93,33 +76,27 @@ def generate_signal(rsi, macd, signal_line):
         latest_rsi = rsi.iloc[-1]
         latest_macd = macd.iloc[-1]
         latest_signal = signal_line.iloc[-1]
-
-        messages = []
+        msg = []
         if latest_rsi < 30:
-            messages.append("🔼 RSI suggests the stock may be **oversold**.")
+            msg.append("🔼 RSI suggests the stock may be **oversold**.")
         elif latest_rsi > 70:
-            messages.append("🔽 RSI suggests the stock may be **overbought**.")
-
+            msg.append("🔽 RSI suggests the stock may be **overbought**.")
         if latest_macd > latest_signal:
-            messages.append("📈 MACD indicates a **bullish** crossover.")
+            msg.append("📈 MACD indicates a **bullish** crossover.")
         else:
-            messages.append("📉 MACD indicates a **bearish** crossover.")
-
-        return " ".join(messages)
+            msg.append("📉 MACD indicates a **bearish** crossover.")
+        return " ".join(msg)
     except:
         return "Unable to generate signal summary."
 
 def get_long_term_macd_trend(macd_series):
-    recent_macd = macd_series.tail(30)
-    avg_macd = recent_macd.mean()
+    avg_macd = macd_series.tail(30).mean()
     latest_macd = macd_series.iloc[-1]
-
     if avg_macd < 0 and latest_macd < 0:
         return "📉 Long-Term MACD Trend: **Bearish**", "red"
     elif avg_macd > 0 and latest_macd > 0:
         return "📈 Long-Term MACD Trend: **Bullish**", "green"
-    else:
-        return "⚖️ Long-Term MACD Trend: **Neutral / Uncertain**", "orange"
+    return "⚖️ Long-Term MACD Trend: **Neutral / Uncertain**", "orange"
 
 def plot_candlestick_chart(hist):
     fig = go.Figure(data=[go.Candlestick(
@@ -132,94 +109,15 @@ def plot_candlestick_chart(hist):
     fig.update_layout(title="Candlestick Chart", xaxis_title="Date", yaxis_title="Price", xaxis_rangeslider_visible=False)
     st.plotly_chart(fig, use_container_width=True)
 
-    with st.expander("📘 Learn More about Candlestick Charts"):
-        st.markdown("""
-        Candlestick charts display stock price movements within a specific period:
-        - **Body:** Shows open and close prices (green = close > open, red = close < open).
-        - **Wicks (Shadows):** Indicate high and low prices.
-        They help visualize market sentiment, trends, and reversals.
-        """)
-
-def plot_sma_chart(hist):
+def plot_line_chart(hist, y_col, title, color='blue', ref_lines=[]):
     fig, ax = plt.subplots()
-    ax.plot(hist.index, hist['Close'], label='Close', color='blue')
-    ax.plot(hist.index, hist['SMA20'], label='SMA 20', color='green')
-    ax.plot(hist.index, hist['SMA50'], label='SMA 50', color='red')
-    ax.legend()
-    ax.grid(True)
-    fig.autofmt_xdate()
-    st.pyplot(fig)
-
-    with st.expander("📘 Learn More about Simple Moving Averages (SMA)"):
-        st.markdown("""
-        SMAs smooth out price data by averaging closing prices over a set period:
-        - **SMA20:** Short-term trend indicator.
-        - **SMA50:** Medium-term trend indicator.
-        Crossovers between SMAs can signal potential buy or sell points.
-        """)
-
-def plot_volume_chart(hist):
-    fig, ax = plt.subplots()
-    ax.bar(hist.index, hist['Volume'], color='gray')
-    ax.set_title("Trading Volume")
-    fig.autofmt_xdate()
-    st.pyplot(fig)
-
-    with st.expander("📘 Learn More about Trading Volume"):
-        st.markdown("""
-        Volume shows the number of shares traded during a specific time.
-        High volume often confirms price movements; low volume may indicate weak interest.
-        """)
-
-def plot_rsi_chart(hist):
-    fig, ax = plt.subplots()
-    ax.plot(hist.index, hist['RSI'], color='purple')
-    ax.axhline(70, color='red', linestyle='--', label='Overbought')
-    ax.axhline(30, color='green', linestyle='--', label='Oversold')
-    ax.set_title("RSI")
+    ax.plot(hist.index, hist[y_col], label=y_col, color=color)
+    for yval, label, style, ref_color in ref_lines:
+        ax.axhline(y=yval, linestyle=style, color=ref_color, label=label)
+    ax.set_title(title)
     ax.legend()
     fig.autofmt_xdate()
     st.pyplot(fig)
-
-    with st.expander("📘 Learn More about RSI (Relative Strength Index)"):
-        st.markdown("""
-        RSI measures speed and change of price movements on a scale of 0 to 100.
-        - Above 70: Overbought (possible sell signal).
-        - Below 30: Oversold (possible buy signal).
-        RSI helps identify momentum shifts.
-        """)
-
-def plot_macd_chart(hist):
-    fig, ax = plt.subplots()
-    ax.plot(hist.index, hist['MACD'], label='MACD', color='black')
-    ax.plot(hist.index, hist['Signal'], label='Signal Line', color='orange')
-    ax.axhline(0, color='gray', linestyle='--')
-    ax.legend()
-    fig.autofmt_xdate()
-    st.pyplot(fig)
-
-    with st.expander("📘 Learn More about MACD and Signal Line"):
-        st.markdown("""
-        The MACD (Moving Average Convergence Divergence) shows the relationship between two EMAs:
-        - **MACD line:** Difference between 12-day and 26-day EMAs.
-        - **Signal line:** 9-day EMA of the MACD line.
-        Crossovers indicate buy or sell signals:
-        - MACD crossing above Signal = Bullish.
-        - MACD crossing below Signal = Bearish.
-        """)
-
-def explain_macd_difference(macd_series, signal_series):
-    diff = macd_series.iloc[-1] - signal_series.iloc[-1]
-    st.subheader("📊 MACD - Signal Line Difference")
-    st.write(f"Current difference between MACD and Signal Line: **{diff:.4f}**")
-
-    with st.expander("📘 Learn More about MACD Difference"):
-        st.markdown("""
-        The difference between MACD and Signal line helps confirm momentum strength:
-        - Positive difference: Bullish momentum.
-        - Negative difference: Bearish momentum.
-        Larger magnitude = stronger momentum.
-        """)
 
 # ------------------- Main App -------------------
 
@@ -238,80 +136,91 @@ def main():
             return
 
         info = stock.info
-        longName = info.get('longName', 'Unknown Company')
+        longName = info.get('longName', symbol)
         currency = info.get('currency', 'INR')
         currency_symbol = get_currency_symbol(currency)
-
-        # Safely get current price fallback to last close price if missing
-        current_price = info.get('currentPrice', None)
-        if current_price is None:
-            current_price = hist['Close'].iloc[-1]
-
-        book_value = info.get("bookValue", None)
-        face_value = info.get("faceValue", "N/A")
-        isin = info.get("isin", "N/A")
-
-        eps = info.get('trailingEps', None)
-
-        # ROE Calculation: use Yahoo if valid, else calculate
-        roe_yahoo = info.get('returnOnEquity', None)
-        if roe_yahoo is None or roe_yahoo == 0:
-            if eps is not None and book_value and book_value != 0:
-                calculated_roe = (eps / book_value) * 100
-            else:
-                calculated_roe = 0
-        else:
-            calculated_roe = roe_yahoo * 100
-
+        current_price = info.get('currentPrice', hist['Close'].iloc[-1])
         formatted_time = format_close_time(hist.index[-1], symbol)
 
+        # Optional Fields
+        book_value = info.get("bookValue")
+        face_value = info.get("faceValue")
+        eps = info.get("trailingEps")
+        roe_raw = info.get("returnOnEquity")
+        debt_equity = info.get("debtToEquity")
+        op_margin = info.get("operatingMargins")
+        pe = info.get('trailingPE')
+        dividend_yield = info.get('dividendYield')
+        volume = info.get('volume')
+        market_cap = info.get('marketCap')
+
+        if roe_raw is None or roe_raw == 0:
+            if eps and book_value:
+                roe = (eps / book_value) * 100
+            else:
+                roe = None
+        else:
+            roe = roe_raw * 100
+
         # Summary Info
-        st.subheader(f"🏢 {longName} ({symbol})")
-        st.markdown(f"""
-        - **Current Price:** {currency_symbol}{current_price:.2f}
-        - **{formatted_time}**
-        - **Market Cap:** {currency_symbol}{info.get('marketCap', 0)/1e12:.2f} T
-        - **P/E Ratio:** {info.get('trailingPE', 'N/A')}
-        - **Dividend Yield:** {info.get('dividendYield', 0) * 100:.2f}%
-        - **Book Value:** {currency_symbol}{book_value}
-        - **Face Value:** {face_value}
-        - **ISIN:** {isin}
-        - **EPS:** {eps}
-        - **ROE:** {calculated_roe:.2f}%
-        """)
+        st.subheader(f"🏢 {longName} ({symbol.upper()})")
+        st.markdown(f"- **Current Price:** {currency_symbol}{current_price:.2f}")
+        st.markdown(f"- **{formatted_time}**")
+
+        if market_cap:
+            st.markdown(f"- **Market Cap:** {currency_symbol}{market_cap / 1e12:.2f} T")
+        if pe:
+            st.markdown(f"- **P/E Ratio:** {pe:.2f}")
+        if dividend_yield:
+            st.markdown(f"- **Dividend Yield:** {dividend_yield * 100:.2f}%")
+        if volume:
+            st.markdown(f"- **Volume:** {volume}")
+        if book_value:
+            st.markdown(f"- **Book Value:** {currency_symbol}{book_value:.2f}")
+        if face_value:
+            st.markdown(f"- **Face Value:** {currency_symbol}{face_value:.2f}")
+        if eps:
+            st.markdown(f"- **EPS (TTM):** {eps:.2f}")
+        if roe:
+            st.markdown(f"- **ROE:** {roe:.2f}%")
+        if debt_equity:
+            st.markdown(f"- **Debt to Equity:** {debt_equity:.2f}")
+        if op_margin:
+            st.markdown(f"- **Operating Margin:** {op_margin * 100:.2f}%")
 
         print_major_holders(stock)
 
-        # Plot charts
         st.markdown("---")
         st.header("📈 Price Charts")
 
-        # Candlestick
         plot_candlestick_chart(hist)
 
-        # SMA
         st.subheader("Simple Moving Averages (SMA)")
-        plot_sma_chart(hist)
+        plot_line_chart(hist, 'Close', "Close Price with SMA", 'blue')
+        plot_line_chart(hist, 'SMA20', "SMA 20", 'green')
+        plot_line_chart(hist, 'SMA50', "SMA 50", 'red')
 
-        # Volume
         st.subheader("Trading Volume")
-        plot_volume_chart(hist)
+        plot_line_chart(hist, 'Volume', "Trading Volume", 'gray')
 
-        # RSI
         st.subheader("Relative Strength Index (RSI)")
-        plot_rsi_chart(hist)
+        plot_line_chart(hist, 'RSI', "RSI", 'purple', ref_lines=[
+            (70, 'Overbought', '--', 'red'),
+            (30, 'Oversold', '--', 'green')
+        ])
 
-        # MACD
         st.subheader("MACD and Signal Line")
-        plot_macd_chart(hist)
+        plot_line_chart(hist, 'MACD', "MACD", 'black')
+        plot_line_chart(hist, 'Signal', "Signal", 'orange', ref_lines=[(0, 'Zero Line', '--', 'gray')])
 
-        # MACD difference explanation
-        explain_macd_difference(hist['MACD'], hist['Signal'])
+        # MACD Difference
+        diff = hist['MACD'].iloc[-1] - hist['Signal'].iloc[-1]
+        st.subheader("📊 MACD - Signal Line Difference")
+        st.write(f"Current MACD - Signal: **{diff:.4f}**")
 
         # Signal Summary
         st.header("🔔 Signal Summary")
-        summary_msg = generate_signal(hist['RSI'], hist['MACD'], hist['Signal'])
-        st.info(summary_msg)
+        st.info(generate_signal(hist['RSI'], hist['MACD'], hist['Signal']))
 
         # Long-term MACD trend
         trend_msg, trend_color = get_long_term_macd_trend(hist['MACD'])
