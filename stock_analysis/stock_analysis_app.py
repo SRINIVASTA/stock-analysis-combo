@@ -42,29 +42,25 @@ def format_close_time(last_date, symbol):
 def print_major_holders(stock):
     try:
         mh = stock.major_holders
-        ih = stock.institutional_holders
-
         if mh is None or mh.empty:
-            st.warning("⚠️ Major holders data not available for this stock via yfinance.")
-        else:
-            st.subheader("Major Holders Breakdown:")
-            # mh is a DataFrame with index and values, show as % with no gaps
-            for idx, val in mh.iloc[:, 0].items():
-                # some values are in decimals, convert accordingly
-                try:
-                    if 'PercentHeld' in idx:
-                        display_val = f"{val*100:.2f}%"
-                    else:
-                        display_val = f"{val}"
-                except:
-                    display_val = str(val)
-                st.write(f"{idx.replace('_', ' ').title()}: {display_val}")
+            st.write("No major holders data available.")
+            return
 
-        if ih is None or ih.empty:
-            st.warning("⚠️ Institutional holders data not available via yfinance.")
-        else:
-            st.subheader("Top Institutional Holders:")
-            st.dataframe(ih)
+        data = mh.iloc[:, 0].to_dict()
+        insiders = data.get('insidersPercentHeld', None)
+        institutions = data.get('institutionsPercentHeld', None)
+        float_held = data.get('institutionsFloatPercentHeld', None)
+        institutions_count = data.get('institutionsCount', None)
+
+        st.subheader("Major Holders Breakdown:")
+        if insiders is not None:
+            st.write(f"{insiders * 100:.3f}% of Shares Held by Insiders")
+        if institutions is not None:
+            st.write(f"{institutions * 100:.3f}% of Shares Held by Institutions")
+        if float_held is not None:
+            st.write(f"{float_held * 100:.3f}% of Float Held by Institutions")
+        if institutions_count is not None:
+            st.write(f"{int(institutions_count)} Institutions Holding Shares")
 
         with st.expander("📘 Learn More about Major Holders"):
             st.markdown("""
@@ -74,7 +70,7 @@ def print_major_holders(stock):
             - **Float:** Shares available for trading (excluding locked-in shares).
             """)
     except Exception as e:
-        st.error(f"Error fetching major holders: {e}")
+        st.write(f"Error fetching major holders: {e}")
 
 def fetch_stock_data(symbol, period):
     stock = yf.Ticker(symbol)
@@ -246,38 +242,54 @@ def main():
         currency = info.get('currency', 'INR')
         currency_symbol = get_currency_symbol(currency)
         current_price = info.get('currentPrice', hist['Close'].iloc[-1])
-        book_value = info.get("bookValue", "N/A")
+        book_value = info.get("bookValue", None)
         face_value = info.get("faceValue", "N/A")
         isin = info.get("isin", "N/A")
         formatted_time = format_close_time(hist.index[-1], symbol)
 
-        # Summary Info - no gaps, aligned, consistent
+        eps = info.get('trailingEps', None)
+        roe_yahoo = info.get('returnOnEquity', None)
+
+        # Calculate ROE if Yahoo ROE missing or zero
+        if roe_yahoo is None or roe_yahoo == 0:
+            if eps is not None and book_value is not None and book_value != 0:
+                calculated_roe = (eps / book_value) * 100
+            else:
+                calculated_roe = 0
+        else:
+            calculated_roe = roe_yahoo * 100
+
+        roe_display = f"{calculated_roe:.2f}%" if calculated_roe != 0 else "N/A"
+
+        dividend_yield = info.get('dividendYield', 0)
+        dividend_yield_pct = f"{dividend_yield * 100:.2f}%" if dividend_yield else "N/A"
+
         st.subheader(f"🏢 {longName} ({symbol})")
         st.markdown(f"""
-- **Current Price:** {currency_symbol}{current_price:.2f}
-- **{formatted_time}**
-- **Market Cap:** {currency_symbol}{info.get('marketCap', 0)/1e12:.2f} T
-- **P/E Ratio:** {info.get('trailingPE', 'N/A')}
-- **Dividend Yield:** {info.get('dividendYield', 0) * 100:.2f}%
-- **Volume:** {info.get('volume', 'N/A')}
-- **Book Value:** {currency_symbol}{book_value}
-- **EPS (TTM):** {info.get('trailingEps', 'N/A')}
-- **ROE:** {info.get('returnOnEquity', 0) * 100:.2f}%
-- **Debt to Equity:** {info.get('debtToEquity', 'N/A')}
-- **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
+        - **Current Price:** {currency_symbol}{current_price:.2f}
+        - **{formatted_time}**
+        - **Market Cap:** {currency_symbol}{info.get('marketCap', 0)/1e12:.2f} T
+        - **P/E Ratio:** {info.get('trailingPE', 'N/A')}
+        - **Dividend Yield:** {dividend_yield_pct}
+        - **Volume:** {info.get('volume', 'N/A')}
+        - **Book Value:** {currency_symbol}{book_value if book_value is not None else 'N/A'}
+        - **EPS (TTM):** {eps if eps is not None else 'N/A'}
+        - **ROE:** {roe_display}
+        - **Debt to Equity:** {info.get('debtToEquity', 'N/A')}
+        - **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
         """)
 
         with st.expander("📘 Learn More about Summary Metrics"):
             st.markdown("""
-- **Market Cap:** Total value of a company’s outstanding shares.
-- **P/E Ratio:** Price-to-Earnings ratio; valuation metric.
-- **Dividend Yield:** Annual dividends paid divided by stock price.
-- **Volume:** Number of shares traded in a period.
-- **Book Value:** Net asset value per share.
-- **EPS (TTM):** Earnings per share for last 12 months.
-- **ROE:** Return on equity; profitability relative to shareholders’ equity.
-- **Debt to Equity:** Financial leverage indicator.
-- **Operating Margin:** Profitability from operations.
+            - **Market Cap:** Total value of a company’s outstanding shares.
+            - **P/E Ratio:** Price-to-Earnings ratio; valuation metric.
+            - **Dividend Yield:** Annual dividends paid divided by stock price.
+            - **Volume:** Number of shares traded in a period.
+            - **Book Value:** Net asset value per share.
+            - **EPS (TTM):** Earnings per share for last 12 months.
+            - **ROE:** Return on equity; profitability relative to shareholders’ equity.
+            - **Debt to Equity:** Financial leverage indicator.
+            - **Operating Margin:** Profitability from operations.
             """)
 
         # Short-Term Signal
@@ -285,8 +297,8 @@ def main():
         st.info(signal_text)
         with st.expander("📘 Learn More about Short-Term Signals"):
             st.markdown("""
-- **RSI:** Indicates if stock is overbought or oversold.
-- **MACD Crossover:** Bullish or bearish momentum shifts.
+            - **RSI:** Indicates if stock is overbought or oversold.
+            - **MACD Crossover:** Bullish or bearish momentum shifts.
             """)
 
         # Long-Term MACD Meter
@@ -294,13 +306,13 @@ def main():
         st.markdown(f"<h4 style='color:{trend_color}'>{trend_text}</h4>", unsafe_allow_html=True)
         with st.expander("📘 Learn More about Long-Term MACD Trend"):
             st.markdown("""
-This looks at average MACD over past 30 periods to indicate overall market sentiment:
-- Positive = Bullish trend.
-- Negative = Bearish trend.
-- Neutral = Mixed signals.
+            This looks at average MACD over past 30 periods to indicate overall market sentiment:
+            - Positive = Bullish trend.
+            - Negative = Bearish trend.
+            - Neutral = Mixed signals.
             """)
 
-        # Major Holders and Institutional Holders with missing checks
+        # Major Holders
         print_major_holders(stock)
 
         # Candlestick Chart
