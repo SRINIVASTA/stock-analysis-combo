@@ -212,12 +212,14 @@ def explain_macd_difference(macd_series, signal_series):
     diff = macd_series.iloc[-1] - signal_series.iloc[-1]
     st.subheader("📊 MACD - Signal Line Difference")
     st.write(f"Current difference between MACD and Signal Line: **{diff:.4f}**")
-    if diff > 0:
-        st.success("Positive difference indicates bullish momentum.")
-    elif diff < 0:
-        st.error("Negative difference indicates bearish momentum.")
-    else:
-        st.warning("MACD and Signal line are equal — neutral momentum.")
+
+    with st.expander("📘 Learn More about MACD Difference"):
+        st.markdown("""
+        The difference between MACD and Signal line helps confirm momentum strength:
+        - Positive difference: Bullish momentum.
+        - Negative difference: Bearish momentum.
+        Larger magnitude = stronger momentum.
+        """)
 
 # ------------------- Main App -------------------
 
@@ -239,20 +241,31 @@ def main():
         longName = info.get('longName', 'Unknown Company')
         currency = info.get('currency', 'INR')
         currency_symbol = get_currency_symbol(currency)
-        current_price = info.get('currentPrice', hist['Close'].iloc[-1])
+
+        # Safely get current price fallback to last close price if missing
+        current_price = info.get('currentPrice', None)
+        if current_price is None:
+            current_price = hist['Close'].iloc[-1]
+
         book_value = info.get("bookValue", None)
-        eps = info.get('trailingEps', None)
         face_value = info.get("faceValue", "N/A")
         isin = info.get("isin", "N/A")
+
+        eps = info.get('trailingEps', None)
+
+        # ROE Calculation: use Yahoo if valid, else calculate
+        roe_yahoo = info.get('returnOnEquity', None)
+        if roe_yahoo is None or roe_yahoo == 0:
+            if eps is not None and book_value and book_value != 0:
+                calculated_roe = (eps / book_value) * 100
+            else:
+                calculated_roe = 0
+        else:
+            calculated_roe = roe_yahoo * 100
+
         formatted_time = format_close_time(hist.index[-1], symbol)
 
-        # Calculate ROE = (EPS / Book Value) * 100 if possible, else fallback
-        if eps is not None and book_value and book_value != 0:
-            calculated_roe = (eps / book_value) * 100
-        else:
-            roe_yahoo = info.get('returnOnEquity', None)
-            calculated_roe = roe_yahoo * 100 if roe_yahoo else 0
-
+        # Summary Info
         st.subheader(f"🏢 {longName} ({symbol})")
         st.markdown(f"""
         - **Current Price:** {currency_symbol}{current_price:.2f}
@@ -260,71 +273,49 @@ def main():
         - **Market Cap:** {currency_symbol}{info.get('marketCap', 0)/1e12:.2f} T
         - **P/E Ratio:** {info.get('trailingPE', 'N/A')}
         - **Dividend Yield:** {info.get('dividendYield', 0) * 100:.2f}%
-        - **Volume:** {info.get('volume', 'N/A')}
         - **Book Value:** {currency_symbol}{book_value}
-        - **EPS (TTM):** {eps}
+        - **Face Value:** {face_value}
+        - **ISIN:** {isin}
+        - **EPS:** {eps}
         - **ROE:** {calculated_roe:.2f}%
-        - **Debt to Equity:** {info.get('debtToEquity', 'N/A')}
-        - **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
         """)
 
-        # Short-Term Signal
-        signal_text = generate_signal(hist['RSI'], hist['MACD'], hist['Signal'])
-        st.info(signal_text)
-        with st.expander("📘 Learn More about Short-Term Signals"):
-            st.markdown("""
-            - **RSI:** Indicates if stock is overbought or oversold.
-            - **MACD Crossover:** Bullish or bearish momentum shifts.
-            """)
-
-        # Long-Term MACD Meter
-        trend_text, trend_color = get_long_term_macd_trend(hist['MACD'])
-        st.markdown(f"<h4 style='color:{trend_color}'>{trend_text}</h4>", unsafe_allow_html=True)
-        with st.expander("📘 Learn More about Long-Term MACD Trend"):
-            st.markdown("""
-            This looks at average MACD over past 30 periods to indicate overall market sentiment:
-            - Positive = Bullish trend.
-            - Negative = Bearish trend.
-            - Neutral = Mixed signals.
-            """)
-
-        # Major Holders
         print_major_holders(stock)
 
-        # Candlestick Chart
-        st.subheader("🕯️ Candlestick Chart")
+        # Plot charts
+        st.markdown("---")
+        st.header("📈 Price Charts")
+
+        # Candlestick
         plot_candlestick_chart(hist)
 
-        # SMA Plot
-        st.subheader("📈 Price History with SMA")
+        # SMA
+        st.subheader("Simple Moving Averages (SMA)")
         plot_sma_chart(hist)
 
-        # Volume Chart
-        st.subheader("📊 Volume Chart")
+        # Volume
+        st.subheader("Trading Volume")
         plot_volume_chart(hist)
 
-        # RSI Plot
-        st.subheader("📉 RSI Indicator")
+        # RSI
+        st.subheader("Relative Strength Index (RSI)")
         plot_rsi_chart(hist)
 
-        # MACD Plot
-        st.subheader("📈 MACD Indicator")
+        # MACD
+        st.subheader("MACD and Signal Line")
         plot_macd_chart(hist)
 
-        # MACD vs Signal difference
+        # MACD difference explanation
         explain_macd_difference(hist['MACD'], hist['Signal'])
 
-        # CSV Download
-        csv = hist.to_csv()
-        st.download_button("📥 Download Historical Data", data=csv, file_name=f"{symbol}_{period}_data.csv", mime='text/csv')
+        # Signal Summary
+        st.header("🔔 Signal Summary")
+        summary_msg = generate_signal(hist['RSI'], hist['MACD'], hist['Signal'])
+        st.info(summary_msg)
 
-        # Live price refresh
-        if st.button("🔄 Refresh Current Price"):
-            try:
-                live_price = yf.Ticker(symbol).info.get('currentPrice')
-                st.metric("Live Price", f"{currency_symbol}{live_price:.2f}")
-            except:
-                st.error("Could not fetch live price.")
+        # Long-term MACD trend
+        trend_msg, trend_color = get_long_term_macd_trend(hist['MACD'])
+        st.markdown(f"<h3 style='color:{trend_color}'>{trend_msg}</h3>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
