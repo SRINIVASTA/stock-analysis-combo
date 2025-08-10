@@ -212,14 +212,12 @@ def explain_macd_difference(macd_series, signal_series):
     diff = macd_series.iloc[-1] - signal_series.iloc[-1]
     st.subheader("📊 MACD - Signal Line Difference")
     st.write(f"Current difference between MACD and Signal Line: **{diff:.4f}**")
-
-    with st.expander("📘 Learn More about MACD Difference"):
-        st.markdown("""
-        The difference between MACD and Signal line helps confirm momentum strength:
-        - Positive difference: Bullish momentum.
-        - Negative difference: Bearish momentum.
-        Larger magnitude = stronger momentum.
-        """)
+    if diff > 0:
+        st.success("Positive difference indicates bullish momentum.")
+    elif diff < 0:
+        st.error("Negative difference indicates bearish momentum.")
+    else:
+        st.warning("MACD and Signal line are equal — neutral momentum.")
 
 # ------------------- Main App -------------------
 
@@ -242,12 +240,19 @@ def main():
         currency = info.get('currency', 'INR')
         currency_symbol = get_currency_symbol(currency)
         current_price = info.get('currentPrice', hist['Close'].iloc[-1])
-        book_value = info.get("bookValue", "N/A")
+        book_value = info.get("bookValue", None)
+        eps = info.get('trailingEps', None)
         face_value = info.get("faceValue", "N/A")
         isin = info.get("isin", "N/A")
         formatted_time = format_close_time(hist.index[-1], symbol)
 
-        # Summary Info
+        # Calculate ROE = (EPS / Book Value) * 100 if possible, else fallback
+        if eps is not None and book_value and book_value != 0:
+            calculated_roe = (eps / book_value) * 100
+        else:
+            roe_yahoo = info.get('returnOnEquity', None)
+            calculated_roe = roe_yahoo * 100 if roe_yahoo else 0
+
         st.subheader(f"🏢 {longName} ({symbol})")
         st.markdown(f"""
         - **Current Price:** {currency_symbol}{current_price:.2f}
@@ -257,24 +262,11 @@ def main():
         - **Dividend Yield:** {info.get('dividendYield', 0) * 100:.2f}%
         - **Volume:** {info.get('volume', 'N/A')}
         - **Book Value:** {currency_symbol}{book_value}
-        - **EPS (TTM):** {info.get('trailingEps', 'N/A')}
-        - **ROE:** {info.get('returnOnEquity', 0) * 100:.2f}%
+        - **EPS (TTM):** {eps}
+        - **ROE:** {calculated_roe:.2f}%
         - **Debt to Equity:** {info.get('debtToEquity', 'N/A')}
         - **Operating Margin:** {info.get('operatingMargins', 0) * 100:.2f}%
         """)
-
-        with st.expander("📘 Learn More about Summary Metrics"):
-            st.markdown("""
-            - **Market Cap:** Total value of a company’s outstanding shares.
-            - **P/E Ratio:** Price-to-Earnings ratio; valuation metric.
-            - **Dividend Yield:** Annual dividends paid divided by stock price.
-            - **Volume:** Number of shares traded in a period.
-            - **Book Value:** Net asset value per share.
-            - **EPS (TTM):** Earnings per share for last 12 months.
-            - **ROE:** Return on equity; profitability relative to shareholders’ equity.
-            - **Debt to Equity:** Financial leverage indicator.
-            - **Operating Margin:** Profitability from operations.
-            """)
 
         # Short-Term Signal
         signal_text = generate_signal(hist['RSI'], hist['MACD'], hist['Signal'])
