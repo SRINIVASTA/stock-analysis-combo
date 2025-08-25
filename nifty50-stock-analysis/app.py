@@ -2,7 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
-from stock_analysis import get_data
+from stock_analysis import get_data  # Make sure this imports the cached function
 import io
 
 def create_dark_mode_figure(df):
@@ -55,9 +55,9 @@ def main():
     st.set_page_config(layout="wide")
     st.header("📊 Nifty50 Stock Analysis Dashboard (Dark Mode)")
 
-    # Add Clear Cache button
+    # Clear cache button clears only the get_data cache
     if st.button("🧹 Clear Cache and Refresh Data"):
-        st.cache_data.clear()
+        get_data.clear()  # Clear only this function's cache
         st.experimental_rerun()
 
     with st.spinner("Fetching stock data..."):
