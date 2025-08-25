@@ -24,23 +24,26 @@ def main():
 
     fig, ax1 = plt.subplots(figsize=(15, 10))
 
-    sns.barplot(x='Ticker', y='Current Price', data=df, color='skyblue', label='Current Price', width=0.6, ax=ax1)
+    # Reset index so 'Ticker' is a column for seaborn
+    df_plot = df.reset_index()
+
+    sns.barplot(x='Ticker', y='Current Price', data=df_plot, color='skyblue', label='Current Price', width=0.6, ax=ax1)
     ax1.set_ylim(0, max(df['Current Price'].max(), df['Book Value'].max()) * 1.1)
 
     # Annotate Book Value with white color
-    for i, txt in enumerate(df['Book Value']):
+    for i, txt in enumerate(df_plot['Book Value']):
         ax1.annotate(f"{txt:.2f}", (i, txt), textcoords="offset points", xytext=(0, 10), ha='center', fontsize=8, rotation=90, color='white')
 
     # Book Value line - lighter green for visibility
-    ax1.plot(range(len(df)), df['Book Value'], color='limegreen', linewidth=2, marker='o', linestyle='-', label='Book Value')
+    ax1.plot(range(len(df_plot)), df_plot['Book Value'], color='limegreen', linewidth=2, marker='o', linestyle='-', label='Book Value')
 
     ax2 = ax1.twinx()
-    ax2.plot(range(len(df)), df['P/B Ratio'], color='red', linewidth=2, linestyle='--', marker='x', label='P/B Ratio')
+    ax2.plot(range(len(df_plot)), df_plot['P/B Ratio'], color='red', linewidth=2, linestyle='--', marker='x', label='P/B Ratio')
     ax2.set_ylabel('P/B Ratio', color='red', fontsize=12)
     ax2.tick_params(axis='y', labelcolor='red', labelsize=10)
 
-    ax1.set_xticks(range(len(df)))
-    ax1.set_xticklabels(df.index, rotation=90, ha='right', fontsize=10, color='white')
+    ax1.set_xticks(range(len(df_plot)))
+    ax1.set_xticklabels(df_plot['Ticker'], rotation=90, ha='right', fontsize=10, color='white')
 
     # Set axis label colors to white
     ax1.set_ylabel('Current Price / Book Value', color='white', fontsize=12)
@@ -66,3 +69,6 @@ def main():
         file_name="nifty50_stock_analysis_dark.png",
         mime="image/png"
     )
+
+if __name__ == "__main__":
+    main()
