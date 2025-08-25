@@ -1,114 +1,89 @@
 import streamlit as st
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
-from stock_analysis import get_data
+from matplotlib.lines import Line2D
 import io
+from stock_analysis import get_data  # Your custom data fetch function
 
+# ========== Function to build the Matplotlib dark mode figure ==========
+def create_dark_mode_figure(df):
+    plt.style.use('dark_background')
+
+    fig, ax1 = plt.subplots(figsize=(15, 10), facecolor='black')
+    ax1.set_facecolor('black')
+
+    sns.barplot(x='Ticker', y='Current Price', data=df, color='#1f77b4', ax=ax1, width=0.6)
+
+    ax1.plot(df['Ticker'], df['Book Value'], color='#2ca02c', linewidth=2, marker='o', label='Book Value')
+
+    for i, txt in enumerate(df['Book Value']):
+        ax1.annotate(f"{txt:.2f}", (i, txt), textcoords="offset points", xytext=(0, 10),
+                     ha='center', fontsize=8, rotation=90, color='white')
+
+    ax2 = ax1.twinx()
+    ax2.plot(df['Ticker'], df['P/B Ratio'], color='#d62728', linewidth=2, linestyle='--', marker='x', label='P/B Ratio')
+
+    ax1.set_title('Nifty 50 - Current Price, Book Value, and P/B Ratio Comparison', fontsize=16, color='white')
+    ax1.set_xlabel('Ticker', fontsize=12, color='white')
+    ax1.set_ylabel('Current Price / Book Value', fontsize=12, color='white')
+    ax2.set_ylabel('P/B Ratio', fontsize=12, color='#d62728')
+
+    ax1.tick_params(axis='x', colors='white', rotation=90, labelsize=10)
+    ax1.tick_params(axis='y', colors='white', labelsize=10)
+    ax2.tick_params(axis='y', colors='#d62728', labelsize=10)
+
+    for spine in ax1.spines.values():
+        spine.set_color('white')
+    for spine in ax2.spines.values():
+        spine.set_color('white')
+
+    legend_elements = [
+        Line2D([0], [0], color='#1f77b4', marker='s', linestyle='', label='Current Price'),
+        Line2D([0], [0], color='#2ca02c', linewidth=2, marker='o', label='Book Value'),
+        Line2D([0], [0], color='#d62728', linewidth=2, linestyle='--', marker='x', label='P/B Ratio')
+    ]
+    ax1.legend(handles=legend_elements, title='Metrics', loc='upper left',
+               bbox_to_anchor=(1.05, 1), fontsize=10, title_fontsize=12,
+               facecolor='#222222', edgecolor='white')
+
+    ax1.text(0.05, 0.95, 'datasource: yfinance', transform=ax1.transAxes,
+             ha='left', va='top', fontsize=10, color='white')
+
+    plt.tight_layout(pad=2.0)
+    return fig
+
+# ========== Streamlit Main App ==========
 def main():
     st.set_page_config(layout="wide")
     st.header("📊 Welcome to the Nifty50 Stock Analysis Dashboard")
 
     with st.spinner("Fetching stock data..."):
         df = get_data()
+
+    # Ensure 'Ticker' is a column (not index)
+    if df.index.name == 'Ticker':
+        df = df.reset_index()
+
     st.success("Data loaded!")
 
     st.subheader("📋 Data Table")
     st.dataframe(df)
 
-    st.subheader("📈 Price vs Book Value & P/B Ratio Chart")
+    st.subheader("🖼️ Dark Mode Chart (Matplotlib)")
 
-    # Prepare x-axis labels and indices
-    tickers = df.index.tolist()
-    x_vals = list(range(len(tickers)))
+    fig = create_dark_mode_figure(df)
+    st.pyplot(fig)
 
-    # Create figure
-    fig = go.Figure()
+    # Convert plot to PNG
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches='tight', facecolor='black', edgecolor='black')
+    buf.seek(0)
 
-    # Bar trace for Current Price
-    fig.add_trace(go.Bar(
-        x=x_vals,
-        y=df['Current Price'],
-        name='Current Price',
-        marker_color='skyblue',
-        text=[f"{v:.2f}" if v is not None else "" for v in df['Current Price']],
-        textposition='outside',
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>" +
-            "Current Price: %{y}<br>" +
-            "Book Value: %{customdata[1]}<br>" +
-            "P/B Ratio: %{customdata[2]}<extra></extra>"
-        ),
-        customdata=list(zip(df['Book Value'], df['Book Value'], df['P/B Ratio'])),
-    ))
-
-    # Line trace for Book Value
-    fig.add_trace(go.Scatter(
-        x=x_vals,
-        y=df['Book Value'],
-        mode='lines+markers+text',
-        name='Book Value',
-        line=dict(color='limegreen', width=3),
-        text=[f"{v:.2f}" if v is not None else "" for v in df['Book Value']],
-        textposition='top center',
-        hovertemplate=(
-            "<b>%{customdata[0]}</b><br>" +
-            "Book Value: %{y}<br>" +
-            "Current Price: %{customdata[1]}<extra></extra>"
-        ),
-        customdata=list(zip(tickers, df['Current Price']))
-    ))
-
-    # Line trace for P/B Ratio on secondary y-axis
-    fig.add_trace(go.Scatter(
-        x=x_vals,
-        y=df['P/B Ratio'],
-        mode='lines+markers+text',
-        name='P/B Ratio',
-        line=dict(color='red', width=3, dash='dash'),
-        text=[f"{v:.2f}" if v is not None else "" for v in df['P/B Ratio']],
-        textposition='top center',
-        yaxis='y2',
-        hovertemplate="<b>%{x}</b><br>P/B Ratio: %{y}<extra></extra>"
-    ))
-
-    # Update layout for dark theme
-    fig.update_layout(
-        template='plotly_dark',
-        xaxis=dict(
-            tickmode='array',
-            tickvals=x_vals,
-            ticktext=tickers,
-            title="Ticker",
-            tickangle=45
-        ),
-        yaxis=dict(
-            title="Current Price / Book Value",
-            side='left'
-        ),
-        yaxis2=dict(
-            title="P/B Ratio",
-            overlaying='y',
-            side='right'
-        ),
-        legend=dict(
-            title="Metrics",
-            bgcolor='#222222',
-            bordercolor='white',
-            borderwidth=1
-        ),
-        margin=dict(l=60, r=60, t=60, b=100),
-        height=600,
-        hovermode='x unified',
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Download PNG button
-    buf = fig.to_image(format="png", width=1200, height=700, scale=2)
     st.download_button(
-        label="📥 Download Plot as PNG",
+        label="📥 Download PNG (Dark Mode)",
         data=buf,
-        file_name="nifty50_stock_analysis_plotly_dark.png",
+        file_name="nifty50_darkmode_matplotlib.png",
         mime="image/png"
     )
 
