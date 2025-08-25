@@ -14,6 +14,7 @@ This project combines AI and quantum computing techniques to analyze and manage 
 
 ## Project Structure
 
+```bash
 stock-analysis-combo/
 ├── Quantum-AI-Portfolio/
 │   └── app.py
