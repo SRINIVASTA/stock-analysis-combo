@@ -52,6 +52,7 @@ def fetch_ticker_data(ticker):
     except Exception:
         return None
 
+@st.cache_data(ttl=3600)  # Cache results for 1 hour to reduce API calls
 def get_data():
     all_data = []
     for tic in tickers:
