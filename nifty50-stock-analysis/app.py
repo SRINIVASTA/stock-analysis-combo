@@ -55,6 +55,11 @@ def main():
     st.set_page_config(layout="wide")
     st.header("📊 Nifty50 Stock Analysis Dashboard (Dark Mode)")
 
+    # Add Clear Cache button
+    if st.button("🧹 Clear Cache and Refresh Data"):
+        st.cache_data.clear()
+        st.experimental_rerun()
+
     with st.spinner("Fetching stock data..."):
         df = get_data()
 
