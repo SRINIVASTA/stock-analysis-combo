@@ -6,4 +6,3 @@ seaborn
 yfinance
 pandas
 numpy
-kaleido
