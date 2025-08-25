@@ -6,4 +6,4 @@ seaborn
 yfinance
 pandas
 numpy
-# any other packages your apps use
+kaleido
