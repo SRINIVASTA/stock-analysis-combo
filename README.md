@@ -13,16 +13,15 @@ This project combines AI and quantum computing techniques to analyze and manage 
 - Utility functions for plotting and visualization
 
 ## Project Structure
-
 stock-analysis-combo/
 ├── Quantum-AI-Portfolio/
-│ └── app.py
+│   └── app.py
 ├── nifty50-stock-analysis/
-│ ├── app.py
-│ └── nifty50_data.py
+│   ├── app.py
+│   └── nifty50_data.py
 ├── plot_utils.py
 ├── stock_analysis/
-│ └── stock_analysis_app.py
+│   └── stock_analysis_app.py
 ├── combined_app.py
 ├── requirements.txt
 ├── LICENSE
