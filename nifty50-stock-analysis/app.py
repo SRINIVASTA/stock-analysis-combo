@@ -2,7 +2,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
-from stock_analysis import get_data  # Make sure this imports the cached function
 import io
 
 def create_dark_mode_figure(df):
@@ -21,12 +20,16 @@ def create_dark_mode_figure(df):
         ax2 = ax1.twinx()
         ax2.plot(df.index, df['P/B Ratio'], color='#d62728', linewidth=2, linestyle='--', marker='x', label='P/B Ratio')
 
+        # Set tick labels to ticker names
+        ax1.set_xticks(df.index)
+        ax1.set_xticklabels(df['Ticker'], rotation=90, ha='right', fontsize=10, color='white')
+
         ax1.set_title('Nifty 50 - Current Price, Book Value, and P/B Ratio Comparison', fontsize=16, color='white')
         ax1.set_xlabel('Ticker', fontsize=12, color='white')
         ax1.set_ylabel('Current Price / Book Value', fontsize=12, color='white')
         ax2.set_ylabel('P/B Ratio', fontsize=12, color='#d62728')
 
-        ax1.tick_params(axis='x', colors='white', rotation=90, labelsize=10)
+        ax1.tick_params(axis='x', colors='white')
         ax1.tick_params(axis='y', colors='white', labelsize=10)
         ax2.tick_params(axis='y', colors='#d62728', labelsize=10)
 
@@ -55,20 +58,15 @@ def main():
     st.set_page_config(layout="wide")
     st.header("📊 Nifty50 Stock Analysis Dashboard (Dark Mode)")
 
-    # Clear cache button clears only the get_data cache
-    if st.button("🧹 Clear Cache and Refresh Data"):
-        get_data.clear()  # Clear only this function's cache
-        st.experimental_rerun()
-
-    with st.spinner("Fetching stock data..."):
-        df = get_data()
-
-    st.success("Data loaded!")
-
-    st.subheader("📋 Data Table")
-    st.dataframe(df)
-
-    st.subheader("🖼️ Dark Mode Chart")
+    # For demonstration: create a sample dataframe
+    import pandas as pd
+    df = pd.DataFrame({
+        'Ticker': ['RELIANCE', 'TCS', 'HDFC', 'INFY', 'ICICI'],
+        'Current Price': [2500, 3300, 2800, 1500, 900],
+        'Book Value': [1500, 1200, 1400, 1100, 700],
+        'P/B Ratio': [1.67, 2.75, 2.0, 1.36, 1.28]
+    })
+    df.index = range(len(df))
 
     fig = create_dark_mode_figure(df)
     st.pyplot(fig)
@@ -76,6 +74,7 @@ def main():
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches='tight', facecolor='black')
     buf.seek(0)
+    plt.close(fig)  # important!
 
     st.download_button(
         label="📥 Download Chart as PNG (Dark Mode)",
