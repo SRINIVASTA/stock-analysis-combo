@@ -28,6 +28,7 @@ stock-analysis-combo/
 ├── requirements.txt
 ├── LICENSE
 └── README.md
+```
 
 ## Installation
 
@@ -36,3 +37,4 @@ stock-analysis-combo/
 ```bash
 git clone https://github.com/srinivasta/stock-analysis-combo.git
 cd stock-analysis-combo
+```
