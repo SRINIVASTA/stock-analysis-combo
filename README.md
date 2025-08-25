@@ -28,6 +28,7 @@ stock-analysis-combo/
 ├── requirements.txt
 ├── LICENSE
 └── README.md
+```bash
 
 ## Installation
 
