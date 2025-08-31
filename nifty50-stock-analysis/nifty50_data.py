@@ -31,10 +31,19 @@ def fetch_nifty50_data():
             eps = info.get("trailingEps")
             pe = info.get("trailingPE")
             revenue_growth = info.get("revenueGrowth")
+            return_on_equity = info.get("returnOnEquity")
 
             pb_ratio = (current_price / book_value) if current_price and book_value else None
             growth_rate = revenue_growth * 100 if revenue_growth else 0
             intrinsic_value = (eps * (8.5 + 2 * growth_rate)) if eps else None
+
+            # ROE calculation: use provided ROE or calculate manually via EPS / Book Value
+            if return_on_equity is not None:
+                roe_percent = return_on_equity * 100
+            elif eps is not None and book_value not in [None, 0]:
+                roe_percent = (eps / book_value) * 100
+            else:
+                roe_percent = None
 
             all_data.append({
                 "Ticker": ticker,
@@ -45,7 +54,8 @@ def fetch_nifty50_data():
                 "P/E Ratio": pe,
                 "Revenue Growth": revenue_growth,
                 "P/B Ratio": pb_ratio,
-                "Intrinsic Value": intrinsic_value
+                "Intrinsic Value": intrinsic_value,
+                "ROE (%)": roe_percent
             })
         except Exception as e:
             print(f"Error for {ticker}: {e}")
@@ -58,7 +68,8 @@ def fetch_nifty50_data():
                 "P/E Ratio": None,
                 "Revenue Growth": None,
                 "P/B Ratio": None,
-                "Intrinsic Value": None
+                "Intrinsic Value": None,
+                "ROE (%)": None
             })
         time.sleep(1)
 
@@ -66,3 +77,8 @@ def fetch_nifty50_data():
     df.set_index("Ticker", inplace=True)
     df["Date"] = date.today()
     return df
+
+# Example usage
+if __name__ == "__main__":
+    df = fetch_nifty50_data()
+    print(df.head())
