@@ -56,8 +56,17 @@ app_choice = st.sidebar.radio("Select an app:", [
 
 def run_app(module, entry_function="main"):
     if hasattr(module, entry_function):
-        func = getattr(module, entry_function)
-        func()
+        try:
+            func = getattr(module, entry_function)
+            func()
+        # Catch Yahoo Finance rate limiting errors gracefully
+        except Exception as e:
+            error_str = str(e)
+            if "YFRateLimitError" in error_str or "Too Many Requests" in error_str:
+                st.error("⚠️ **Yahoo Finance data service is temporarily unavailable due to heavy traffic limits. Please try again after some time.**")
+            else:
+                # Let other unexpected system bugs surface normally for easier debugging
+                st.error(f"An unexpected execution error occurred: {e}")
     else:
         st.error(f"The selected module does not have a '{entry_function}()' execution block.")
 
